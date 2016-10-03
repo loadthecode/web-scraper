@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
-import scrapy
+from scrapy import log
+from scrapy.spider import BaseSpider
+from scrapy.selector import HtmlXPathSelector
+from scrapy.spider import BaseSpider
+from scrapy.http import Request
+from web_scraper.items import TestItem
 
-
-class GoogleSpider(scrapy.Spider):
+class GoogleSpider(BaseSpider):
     name = "google"
     allowed_domains = ["google.com"]
     start_urls = (
@@ -10,4 +14,12 @@ class GoogleSpider(scrapy.Spider):
     )
 
     def parse(self, response):
-        pass
+        self.log('Response received from %s' % response.url)
+	hxs = HtmlXPathSelector(response)
+	for h3 in hxs.select('//h3').extract():
+		yield TestItem(name=h3)
+
+	for url in hxs.select('//a/@href').extract():
+		yield Request(url, callback=self.parse)
+
+	
